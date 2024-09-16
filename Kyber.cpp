@@ -2,7 +2,8 @@
 #include <algorithm>
 #include <vector>
 #include <cstdlib>
-#include "/home/abhraneelsaha/Desktop/HSM/Software_Files/Rq.cpp"
+#include <ctime> 
+#include "Rq.cpp"
 using namespace std;
 
 class CRYSTALS_KYBER{
@@ -62,24 +63,20 @@ protected:
         
         return arr;
     }
-    
-public:
-    
-    CRYSTALS_KYBER(int N, int K, int q){
-        n = N;
-        k = K;
-        Q = q;
-    }
-    
-    Rq** GEN_A_matrix(){ // Generates A matrix
-        Rq** A = GEN_2D_ARR(k,k,n,Q);
+
+    Rq** GEN_SampleSpace_matrix(int dims){ // Generates A matrix
+        Rq** A = GEN_2D_ARR(dims,dims,n,Q);
         vector<int> coeffs(n,0);
         int temp=0;
         
-        for (int i=0;i<k;i++){
-            for (int j=0;j<k;j++){
+        for (int i=0;i<dims;i++){
+            for (int j=0;j<dims;j++){
                 for (int k=0;k<n;k++){
-                    temp = rand(); // use GaussSampler
+                    do{
+
+                        temp = rand(); // use GaussSampler
+
+                    } while(temp%Q == 0); 
                     coeffs[k] = temp;
                 }
                 
@@ -89,7 +86,43 @@ public:
         
         return A;
     }
+
+    ///Sampling Sub matrix
+    Rq** sampleSubmatrix(Rq** A, int seed = 1726141696, int numRows = 3, int numCols = 3, int N = 3) {
+        int size = sizeof(A);
+        Rq** submatrix = GEN_2D_ARR(numRows, numCols, N, Q);
     
+        // Use seed to determine the starting row and column
+        srand(seed);
+        int startRow = rand() % (size - numRows + 1); // Random start row
+        int startCol = rand() % (size - numCols + 1); // Random start column
+    
+        // Extract the submatrix
+        for (int i = 0; i < numRows; ++i) {
+            for (int j = 0; j < numCols; ++j) {
+                submatrix[i][j] = A[startRow + i][startCol + j];
+            }
+        }
+    
+        return submatrix;
+    }
+    
+public:
+    
+    CRYSTALS_KYBER(int N, int K, int q){
+        n = N;
+        k = K;
+        Q = q;
+    }
+    
+    Rq** Gen_A(int seed = 1726141696) {
+        int dims = 1024;
+        Rq** Sample_Space = GEN_SampleSpace_matrix(dims);
+        Rq** A = sampleSubmatrix(Sample_Space,seed = seed, k, k,n);
+        return A;
+
+    }
+
     Rq* GEN_SECRET(){ // Generates Secret Key
         Rq* S = GEN_RANDOM_MATRICES(n,k,Q);
         return S;
